@@ -1,0 +1,18 @@
+syntax = "proto3";
+package FedMsg;
+
+
+enum Exchange {
+  DBT = 0;
+}
+
+enum SymbolType {
+  SPOT = 0;
+  FUT = 1;
+  OPT = 2;
+  PERP = 3;
+}
+
+enum PortfolioName {
+  DBT_SP = 0;
+}
