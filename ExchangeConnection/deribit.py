@@ -6,8 +6,8 @@ from dataclasses import dataclass
 # from websockets import ClientProtocol
 import websockets
 
-from sp.fed_messages_pb2 import Exchange
-from sp.portfolio_manager_pb2 import Fill
+from fed_messages_pb2 import Exchange
+from portfolio_manager_pb2 import Fill
 
 
 @dataclass
@@ -23,8 +23,11 @@ class DeribitConnection:
         subscribe_message = self.get_trades_subscribe_message()
         heartbeat_message = self.get_set_heartbeat_message()
         test_message = self.get_test_message()
+        auth_message = self.get_auth_message()
         async with websockets.connect("wss://www.deribit.com/ws/api/v2") as ws:
-            ws = self.auth_ws(ws)
+            await ws.send(auth_message)
+            resp = await ws.recv()
+
             await ws.send(heartbeat_message)
             resp = await ws.recv()
 
@@ -35,16 +38,17 @@ class DeribitConnection:
                 resp = await ws.recv()
                 data = json.loads(resp)
                 print(f"Received: {data}")
-                if data["id"] == 1:
-                    fills = self.to_fills(data)
-                    for fill in fills:
-                        await self.queue.put(fill)
-                else:
-                    await ws.send(test_message)
-                    print("Heartbeat sent")
-
-        await ws.send(json.dumps(subscribe_message))
-        print("Subscribed to orders")
+                if "params" in data:
+                    if "data" in data["params"]:
+                        fills = self.to_fills(data)
+                        for fill in fills:
+                            await self.queue.put(fill)
+                    elif "type" in data["params"]:
+                        if data["params"]["type"] == "heartbeat":
+                            print("Heartbeat received")
+                            await ws.send(test_message)
+                        else:
+                            print("Unknown message type")
 
     def get_test_message(self) -> str:
         dict_msg = {
@@ -72,7 +76,7 @@ class DeribitConnection:
             "jsonrpc": "2.0",
             "id": 0,
             "method": "public/set_heartbeat",
-            "params": {"interval": 30},
+            "params": {"interval": 10},
         }
         return json.dumps(msg)
 
@@ -88,7 +92,7 @@ class DeribitConnection:
             fills.append(fill)
         return fills
 
-    def auth_ws(self, ws):
+    def get_auth_message(self):
         msg = {
             "jsonrpc": "2.0",
             "id": 9929,
@@ -99,10 +103,7 @@ class DeribitConnection:
                 "client_secret": self.secret,
             },
         }
-        ws.send(json.dumps(msg))
-        print("WS Authenticated")
-        ws.recv()
-        return ws
+        return json.dumps(msg)
 
     def get_key(self):
         key = os.getenv("EX_SP_KEY")
