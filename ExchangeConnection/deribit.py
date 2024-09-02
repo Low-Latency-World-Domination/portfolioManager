@@ -34,6 +34,7 @@ class DeribitConnection:
 
             await ws.send(subscribe_message)
             resp = await ws.recv()
+            print(f"Received: {resp}")
 
             while True:
                 resp = await ws.recv()

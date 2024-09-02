@@ -1,0 +1,17 @@
+Ports 
+
+The Portfolio manager service listens on port 50052.
+The Trader service listens on port 50053.
+
+
+Versions
+
+v1.2.0 - Aug 19, 2024
+Added a refOrderId field to the Order message in the trader.proto file.
+
+v1.1.o - Aug 10, 2024
+Add the trader service to the trader.proto file.
+
+v1 - Aug 4, 2024
+First version
+Add a trader proto file with an Order message in it.

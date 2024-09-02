@@ -16,3 +16,15 @@ enum SymbolType {
 enum PortfolioName {
   DBT_SP = 0;
 }
+
+enum OrderType {
+  LIMIT = 0;
+  MARKET = 1;
+  CANCEL = 2;
+  CANCEL_ALL = 3;
+}
+
+enum Side {
+  BUY = 0;
+  SELL = 1;
+}

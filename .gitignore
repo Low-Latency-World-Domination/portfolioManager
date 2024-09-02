@@ -156,7 +156,7 @@ cython_debug/
 
 fed_messages_pb2*
 portfolio_manager_pb2*
-
+trader_pb2*
 logs/
 
 # PyCharm

@@ -35,6 +35,8 @@ message Fill {
   string symbol = 4;
   FedMsg.SymbolType symbol_type = 5;
   int64 ts = 6;
+  FedMsg.Side side = 7;
+
 }
 
 service PortfolioManager {
