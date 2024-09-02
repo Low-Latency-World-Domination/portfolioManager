@@ -6,6 +6,7 @@ from dataclasses import dataclass
 # from websockets import ClientProtocol
 import websockets
 
+from config import logger
 from fed_messages_pb2 import Exchange
 from portfolio_manager_pb2 import Fill
 
@@ -38,6 +39,7 @@ class DeribitConnection:
                 resp = await ws.recv()
                 data = json.loads(resp)
                 print(f"Received: {data}")
+                logger.info(f"RECV: {data}")
                 if "params" in data:
                     if "data" in data["params"]:
                         fills = self.to_fills(data)
@@ -45,7 +47,6 @@ class DeribitConnection:
                             await self.queue.put(fill)
                     elif "type" in data["params"]:
                         if data["params"]["type"] == "heartbeat":
-                            print("Heartbeat received")
                             await ws.send(test_message)
                         else:
                             print("Unknown message type")
@@ -76,7 +77,7 @@ class DeribitConnection:
             "jsonrpc": "2.0",
             "id": 0,
             "method": "public/set_heartbeat",
-            "params": {"interval": 10},
+            "params": {"interval": 30},
         }
         return json.dumps(msg)
 
