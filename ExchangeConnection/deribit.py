@@ -26,18 +26,20 @@ class DeribitConnection:
         test_message = self.get_test_message()
         auth_message = self.get_auth_message()
         async with websockets.connect("wss://www.deribit.com/ws/api/v2") as ws:
-            await ws.send(auth_message)
-            resp = await ws.recv()
+            self.ws = ws
+            await self.ws.send(auth_message)
+            resp = await self.ws.recv()
 
             await ws.send(heartbeat_message)
-            resp = await ws.recv()
+            resp = await self.ws.recv()
 
+            asyncio.create_task(self.send_hearbeat())
             await ws.send(subscribe_message)
-            resp = await ws.recv()
+            resp = await self.ws.recv()
             print(f"Received: {resp}")
 
             while True:
-                resp = await ws.recv()
+                resp = await self.ws.recv()
                 data = json.loads(resp)
                 print(f"Received: {data}")
                 logger.info(f"RECV: {data}")
@@ -46,11 +48,16 @@ class DeribitConnection:
                         fills = self.to_fills(data)
                         for fill in fills:
                             await self.queue.put(fill)
-                    elif "type" in data["params"]:
-                        if data["params"]["type"] == "heartbeat":
-                            await ws.send(test_message)
-                        else:
-                            print("Unknown message type")
+                    # elif "type" in data["params"]:
+                    #     if data["params"]["type"] == "heartbeat":
+                    #         await self.ws.send(test_message)
+                    #     else:
+                    #         print("Unknown message type")
+
+    async def send_hearbeat(self):
+        while True:
+            await asyncio.sleep(30)
+            await self.ws.send(self.get_test_message())
 
     def get_test_message(self) -> str:
         dict_msg = {
